@@ -1,0 +1,41 @@
+services:
+  next:
+    image: mynt208/myquenti:1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "bunx prisma db push && bunx prisma generate && bun dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+    working_dir: /app
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: mysql://user:password@db:3306/db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: db
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: "db"
+      MYSQL_USER: "user"
+      MYSQL_PASSWORD: "password"
+      MYSQL_ROOT_PASSWORD: "password"
+    ports:
+      - "3306:3306"
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uuser", "-ppassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db:
