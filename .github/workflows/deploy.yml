@@ -1,0 +1,54 @@
+name: Deploy to Koyeb
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: myquenti
+  IMAGE_TAG: 1
+  REGISTRY: docker.io
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Login to DockerHub
+      - name: Log in to DockerHub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      # # Build and push image
+      # - name: Build and push Docker image
+      #   run: |
+      #     IMAGE=${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+      #     echo "Pushing image $IMAGE"
+      #     docker build -t $IMAGE .
+      #     docker push $IMAGE
+
+      # Deploy to Koyeb using API
+      - name: Deploy to Koyeb
+        run: |
+          IMAGE=${{ env.REGISTRY }}/${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          curl -X POST "https://app.koyeb.com/v1/services" \
+            -H "Authorization: Bearer ${{ secrets.KOYEB_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "quenti-service",
+              "app": "quenti-app",
+              "instance_type": "Free",
+              "docker": {
+                "image": "'$IMAGE'",
+                "env": [
+                  {"key": "NEXTAUTH_SECRET", "value": "'${{ secrets.NEXTAUTH_SECRET }}'"},
+                  {"key": "QUENTI_ENCRYPTION_KEY", "value": "'${{ secrets.QUENTI_ENCRYPTION_KEY }}'"},
+                  {"key": "GOOGLE_CLIENT_ID", "value": "'${{ secrets.GOOGLE_CLIENT_ID }}'"},
+                  {"key": "GOOGLE_CLIENT_SECRET", "value": "'${{ secrets.GOOGLE_CLIENT_SECRET }}'"}
+                ],
+                "ports": [
+                  {"port": 3000, "protocol": "http"}
+                ]
+              }
+            }'
