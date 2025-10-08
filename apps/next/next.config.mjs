@@ -3,6 +3,9 @@ import { withAxiom } from "next-axiom";
 import nextBuildId from "next-build-id";
 import { dirname } from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
 
 // @ts-check
 
@@ -13,7 +16,8 @@ import { fileURLToPath } from "url";
 import "@quenti/env/client/client.mjs";
 import "@quenti/env/server/server.mjs";
 
-import pjson from "./package.json" assert { type: "json" };
+// import pjson from "./package.json" assert { type: "json" };
+const pjson = require("./package.json");
 
 const shouldAnalyzeBundles = process.env.ANALYZE === "true";
 const withBundleAnalyzer = (await import("@next/bundle-analyzer")).default({

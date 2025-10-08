@@ -1,0 +1,33 @@
+# Dockerfile
+FROM oven/bun:canary AS builder
+
+WORKDIR /app
+
+ENV SKIP_ENV_VALIDATION=true
+
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
+COPY package*.json ./
+COPY turbo.json ./
+COPY bun.lockb ./
+COPY apps/ apps/
+COPY packages/ packages/
+COPY tsconfig.base.json ./
+
+RUN bun i
+
+WORKDIR /app/apps/cdn
+RUN bun remove wrangler
+RUN bun add -D wrangler@4.42.1
+
+WORKDIR /app/apps/packages/prisma
+
+RUN echo '#!/bin/bash' > /usr/local/bin/git && \
+    echo 'if [[ "$*" == *"rev-parse HEAD"* ]]; then' >> /usr/local/bin/git && \
+    echo '  echo "0000000000000000000000000000000000000000"' >> /usr/local/bin/git && \
+    echo 'else' >> /usr/local/bin/git && \
+    echo '  exit 0' >> /usr/local/bin/git && \
+    echo 'fi' >> /usr/local/bin/git && \
+    chmod +x /usr/local/bin/git
+
+CMD ["bunx", "prisma", "generate"]
