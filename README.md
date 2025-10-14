@@ -1,6 +1,6 @@
 [![og:image](./apps/next/public/og-image.png)](https://quenti.io)
 
-The open-source Quizlet alternative.
+Update _ The open-source Quizlet alternative.
 
 ## The Stack
 
